@@ -1,0 +1,53 @@
+TIPTOP 提供一個的 Library 可以將畫面單身的資料匯出到 Excel ，
+例如：CALL cl_export_to_excel(ui.Interface.getRootNode(),base.TypeInfo.create(g_sfq),'','')
+
+但是有程式在視窗上是有二個單身，像是工單發料、工單退料、付款沖帳、收款沖帳…等，
+或是有程式會開啟另一個視窗的明細資料，像出貨單的單價，應付帳款的多發票…等。
+同一支程式會呼叫多個畫面或是有多單身的情況時，
+用 cl_export_to_excel 就會發現，怎麼匯出到 Excel 的資料是對的，但是欄位的名稱是錯的。
+造成匯出來就會不整齊，不會依序排好。
+因為 ui.Interface.getRootNode() 都是抓第一個顯示的單身來當作匯出的資料陣列。
+所以我們就要把 ui.Interface.getRootNode() 改成正確的 node (節點)。
+TIPTOP 並非 MDI 視窗架構，所以一個 Windows 只會有一個 Form。
+
+畫面的架構：
+UserInterface
+ |--Windows
+ |        |-- Form
+ |        |        |--Table
+ |        |--Dialog
+ |--TopMenu
+ |--ToolBar
+
+參考 4js 網站說明，提供 ui.window 的函數說明：
+CLASS Method：
+forName( name STRING )：回傳目前是否有開啟 name 視窗，並傳回位置
+getCurrent()：回傳目前的視窗位置
+
+OBJECT Method：
+findNode( t STRING, n STRING )：找尋類型為 t，且名稱為 n 的節點
+createForm( n STRING )：開啟一個新的畫面，且傳回新畫面的位置
+getForm()：回傳目前畫面的位置
+getNode()：回傳目前節點的位置
+setText( t STRING ) ：設定視窗的標題名稱
+getText()：回傳視窗的標題名稱
+setImage( n STRING )：設定視窗的 icon 圖示
+getImage()：回傳視窗的 icon 圖示
+
+首先要先宣告二個變數：
+DEFINE w ui.Window
+DEFINE n om.DomNode
+
+再來就是要取得目前的視窗和要匯出 Excel 的 Node：
+如果是新的視窗來顯示的話，只要用 getNode 即可，
+LET w = ui.Window.getCurrent()
+LET n = w.getNode()
+
+如果是多單身的視窗，就要告訴系統是那一個單身 Node：
+LET w = ui.Window.getCurrent()
+LET n = w.findNode("Table","s_sfs")
+
+然後再修改  cl_export_to_excel 把 ui.Interface.getRootNode() 改為 n 就可以了，
+CALL cl_export_to_excel(n,base.TypeInfo.create(g_sfs),'','')
+
+資料來源：http://tyruan.blogspot.com/2014/09/excel.html
